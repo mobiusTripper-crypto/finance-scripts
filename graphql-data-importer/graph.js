@@ -1,33 +1,40 @@
 import { GraphQLClient, gql } from "graphql-request";
 import moment from "moment-timezone";
 
-const BEETHOVENX_ENDPOINT =
-  "https://api.thegraph.com/subgraphs/name/beethovenxfi/beethovenx";
-const MASTERCHEF_ENDPOINT =
-  "https://api.thegraph.com/subgraphs/name/beethovenxfi/masterchefv2";
-const FANTOM_BLOCKS_ENDPOINT =
-  "https://api.thegraph.com/subgraphs/name/beethovenxfi/fantom-blocks";
+const BEETHOVENX_ENDPOINT = [
+  "https://api.thegraph.com/subgraphs/name/beethovenxfi/beethovenx",
+  "https://api.thegraph.com/subgraphs/name/beethovenxfi/beethovenx-optimism",
+];
 
-export async function getBlockForCurrentDate() {
+const MASTERCHEF_ENDPOINT = [
+  "https://api.thegraph.com/subgraphs/name/beethovenxfi/masterchefv2",
+  "https://api.thegraph.com/subgraphs/name/beethovenxfi/balancer-gauges-optimism",
+];
+const FANTOM_BLOCKS_ENDPOINT = [
+  "https://api.thegraph.com/subgraphs/name/beethovenxfi/fantom-blocks",
+  "https://api.thegraph.com/subgraphs/name/danielmkm/optimism-blocks",
+];
+
+export async function getBlockForCurrentDate(networkIndex) {
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - 1);
-  return getBlockForDate(startDate);
+  return getBlockForDate(startDate, networkIndex);
 }
 
-export async function getBlockForDate(startDate) {
+export async function getBlockForDate(startDate, networkIndex) {
   let timestamp = 0;
   const runDateUTC = moment.tz(startDate, "GMT").startOf("day");
   startDate.setDate(startDate.getDate() + 1);
   timestamp = moment.tz(startDate, "GMT").startOf("day").unix();
 
-  const blockNumber = await getBlockForTimestamp(timestamp);
+  const blockNumber = await getBlockForTimestamp(timestamp, networkIndex);
 
   console.log("import run:%s, %i", runDateUTC.format(), timestamp, blockNumber);
 
   return { blockNumber, timestamp, runDateUTC };
 }
 
-export async function getAllPools(blockNumber) {
+export async function getAllPools(blockNumber, networkIndex) {
   const getPoolsQuery = gql`
     query getpools($blocknumber: Int!) {
       pools(
@@ -35,7 +42,7 @@ export async function getAllPools(blockNumber) {
         orderDirection: desc
         orderBy: totalLiquidity
         block: { number: $blocknumber }
-        where: { totalLiquidity_gt: 9999 }
+        where: { totalLiquidity_gt: 4999 }
       ) {
         name
         address
@@ -51,7 +58,7 @@ export async function getAllPools(blockNumber) {
     }
   `;
 
-  const client = new GraphQLClient(BEETHOVENX_ENDPOINT);
+  const client = new GraphQLClient(BEETHOVENX_ENDPOINT[networkIndex]);
   const variables = { blocknumber: Number(blockNumber) };
 
   const response = await client.request(getPoolsQuery, variables);
@@ -125,6 +132,20 @@ export async function getBeetsPerBlock(blockNumber) {
 
 function blockQuery(timestamp) {
   return gql`
+  query getblock {
+    blocks(
+      orderBy: timestamp
+      first: 1
+      orderDirection: asc
+      where: {timestamp_gt: ${timestamp}}
+    ) {
+      number
+      timestamp
+    }
+  }
+  `;
+
+  return gql`
 query getblock {
   blocks(orderBy: timestamp,
     orderDirection: desc,
@@ -137,8 +158,8 @@ query getblock {
 `;
 }
 
-async function getBlockForTimestamp(timestamp) {
-  const endpoint = FANTOM_BLOCKS_ENDPOINT;
+async function getBlockForTimestamp(timestamp, networkIndex) {
+  const endpoint = FANTOM_BLOCKS_ENDPOINT[networkIndex];
 
   const client = new GraphQLClient(endpoint);
   const data = await client.request(blockQuery(timestamp));

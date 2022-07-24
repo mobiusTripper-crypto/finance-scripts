@@ -10,32 +10,73 @@ import {
   getDataSheetProperties,
   copyPasteNewRows,
 } from "./sheets.js";
+import moment from "moment-timezone";
 
-importPools();
-
-async function importPools() {
-  const oAuth2Client = await getAuthorization();
-  addPoolDatabaseRows(oAuth2Client);
+console.log("fantom import start");
+try {
+  await importPoolsFantom();
+} catch (error) {
+  console.log("fantom import error", error.message);
 }
 
-async function addPoolDatabaseRows(auth) {
-  console.log("\nStart Pool Import", new Date());
+console.log("optimism import start");
+try {
+  await importPoolsOptimism();
+} catch (error) {
+  console.log("optimism import error", error.message);
+}
 
-  //  const SPREADSHEET_ID = "16T1WK89Q1fxXYkJ79cz7NCGatVKKgZUCkOmGUyQ5YZQ"; //TEST POOL SHEET
+//"1YGyVDUQuJoQRj2sUMpWnCO-8O_fcVW02-fhdb9Uf2_A"; //LIVE DATA SHEET ADDRESS
+// 1eqnNNmEINlM2gLSKMdeyJvfZBrCutnTaLnUudQItCyY //test spreadsheet
+async function importPoolsFantom() {
+  const oAuth2Client = await getAuthorization();
+  await addPoolDatabaseRows(
+    oAuth2Client,
+    "1YGyVDUQuJoQRj2sUMpWnCO-8O_fcVW02-fhdb9Uf2_A",
+    "Database",
+    0
+  );
+}
 
-  const SPREADSHEET_ID = "1YGyVDUQuJoQRj2sUMpWnCO-8O_fcVW02-fhdb9Uf2_A"; //LIVE DATA SHEET ADDRESS
+async function importPoolsOptimism() {
+  const oAuth2Client = await getAuthorization();
+  await addPoolDatabaseRows(
+    oAuth2Client,
+    "1YGyVDUQuJoQRj2sUMpWnCO-8O_fcVW02-fhdb9Uf2_A",
+    "DatabaseOptimism",
+    1
+  );
+}
 
-  const SHEET_NAME = "Database";
+async function addPoolDatabaseRows(auth, sheetID, databaseName, networkIndex) {
+  console.log(
+    "\nStart Pool Import",
+    new Date().toString(),
+    sheetID,
+    databaseName,
+    networkIndex
+  );
+
+  const SPREADSHEET_ID = sheetID;
+
+  const SHEET_NAME = databaseName;
 
   const appAuthorization = google.sheets({ version: "v4", auth });
 
   /*  RUN FOR DATE ENTERED  */
-  // const { blockNumber, timestamp, runDateUTC } = await getBlockForDate(
-  //   new Date(2022, 2, 2) //(YYYY, MM-1, DD)
-  // );
+  // const startDate = new Date(2022, 5, 2);
+  // const endDate = moment.tz(new Date(2022, 6, 23), "GMT").startOf("day").unix();
+  // let lastRunTimestamp = 0;
+  // while (lastRunTimestamp <= endDate) {
+  //   const { blockNumber, timestamp, runDateUTC } = await getBlockForDate(
+  //     startDate,
+  //     networkIndex
+  //   );
 
   /* RUN FOR CURRENT DATE */
-  const { blockNumber, timestamp, runDateUTC } = await getBlockForCurrentDate();
+  const { blockNumber, timestamp, runDateUTC } = await getBlockForCurrentDate(
+    networkIndex
+  );
 
   const spreadsheetProperties = await getSpreadsheetProperites(
     appAuthorization,
@@ -52,7 +93,7 @@ async function addPoolDatabaseRows(auth) {
     );
 
   if (!isTimestampInSheet) {
-    const pools = await getAllPools(blockNumber);
+    const pools = await getAllPools(blockNumber, networkIndex);
 
     const completePools = pools.map((pool, index) => {
       const orderedPool = {
@@ -98,5 +139,7 @@ async function addPoolDatabaseRows(auth) {
     );
   } else console.log("Pool Database already in spreadsheet for timestamp");
 
+  //lastRunTimestamp = timestamp;
+  // }
   console.log("Pool Import Sucessful");
 }
