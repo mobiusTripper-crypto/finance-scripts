@@ -66,7 +66,7 @@ export async function getAllPools(blockNumber, networkIndex) {
   return response.pools;
 }
 
-export async function getEmissionsData(blockNumber) {
+export async function getEmissionsData(blockNumber, networkIndex) {
   const getEmissionsQuery = gql`
     query getEmissions($blocknumber: Int!) {
       pools(block: { number: $blocknumber }, where: { rewarder_gte: "0" }) {
@@ -83,14 +83,14 @@ export async function getEmissionsData(blockNumber) {
     }
   `;
 
-  const client = new GraphQLClient(MASTERCHEF_ENDPOINT);
+  const client = new GraphQLClient(MASTERCHEF_ENDPOINT[networkIndex]);
   const variables = { blocknumber: Number(blockNumber) };
   const response = await client.request(getEmissionsQuery, variables);
 
   return response.pools;
 }
 
-export async function getTokenData(blockNumber) {
+export async function getTokenData(blockNumber, networkIndex) {
   const getTokensQuery = gql`
     query getTokens($blocknumber: Int!) {
       tokens(first: 1000, skip: 0, block: { number: $blocknumber }) {
@@ -105,7 +105,7 @@ export async function getTokenData(blockNumber) {
     }
   `;
 
-  const client = new GraphQLClient(BEETHOVENX_ENDPOINT);
+  const client = new GraphQLClient(BEETHOVENX_ENDPOINT[networkIndex]);
   const variables = { blocknumber: Number(blockNumber) };
 
   const response = await client.request(getTokensQuery, variables);
@@ -113,7 +113,7 @@ export async function getTokenData(blockNumber) {
   return response.tokens;
 }
 
-export async function getBeetsPerBlock(blockNumber) {
+export async function getBeetsPerBlock(blockNumber, networkIndex) {
   const getBeetsPerBlockQuery = gql`
     query getBeetsPerBlock($blocknumber: Int!) {
       masterChefs(block: { number: $blocknumber }) {
@@ -122,7 +122,7 @@ export async function getBeetsPerBlock(blockNumber) {
     }
   `;
 
-  const client = new GraphQLClient(MASTERCHEF_ENDPOINT);
+  const client = new GraphQLClient(MASTERCHEF_ENDPOINT[networkIndex]);
   const variables = { blocknumber: Number(blockNumber) };
 
   const response = await client.request(getBeetsPerBlockQuery, variables);

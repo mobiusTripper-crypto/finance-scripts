@@ -64,8 +64,8 @@ async function addPoolDatabaseRows(auth, sheetID, databaseName, networkIndex) {
   const appAuthorization = google.sheets({ version: "v4", auth });
 
   /*  RUN FOR DATE ENTERED  */
-  // const startDate = new Date(2022, 5, 2);
-  // const endDate = moment.tz(new Date(2022, 6, 23), "GMT").startOf("day").unix();
+  // const startDate = new Date(2022, 6, 29);
+  // const endDate = moment.tz(new Date(2022, 7, 2), "GMT").startOf("day").unix();
   // let lastRunTimestamp = 0;
   // while (lastRunTimestamp <= endDate) {
   //   const { blockNumber, timestamp, runDateUTC } = await getBlockForDate(
@@ -73,73 +73,73 @@ async function addPoolDatabaseRows(auth, sheetID, databaseName, networkIndex) {
   //     networkIndex
   //   );
 
-  /* RUN FOR CURRENT DATE */
-  const { blockNumber, timestamp, runDateUTC } = await getBlockForCurrentDate(
-    networkIndex
-  );
+    /* RUN FOR CURRENT DATE */
+    const { blockNumber, timestamp, runDateUTC } = await getBlockForCurrentDate(
+      networkIndex
+    );
 
-  const spreadsheetProperties = await getSpreadsheetProperites(
-    appAuthorization,
-    SPREADSHEET_ID
-  );
-
-  const { databaseSheetId, lastRowIndex, isTimestampInSheet } =
-    await getDataSheetProperties(
+    const spreadsheetProperties = await getSpreadsheetProperites(
       appAuthorization,
-      spreadsheetProperties,
-      SHEET_NAME,
-      timestamp,
-      "F"
+      SPREADSHEET_ID
     );
 
-  if (!isTimestampInSheet) {
-    const pools = await getAllPools(blockNumber, networkIndex);
+    const { databaseSheetId, lastRowIndex, isTimestampInSheet } =
+      await getDataSheetProperties(
+        appAuthorization,
+        spreadsheetProperties,
+        SHEET_NAME,
+        timestamp,
+        "F"
+      );
 
-    const completePools = pools.map((pool, index) => {
-      const orderedPool = {
-        rank: (index + 1).toString(),
-        date: runDateUTC.format("MM/DD/YYYY"),
-        blockNumber: blockNumber,
-        timeStamp: timestamp.toString(),
-        address: pool.address,
-        poolType: pool.poolType,
-        name: pool.name,
-        swapFee: pool.swapFee,
-        swapsCount: pool.swapsCount,
-        symbol: pool.symbol,
-        totalLiquidity: pool.totalLiquidity,
-        totalShares: pool.totalShares,
-        totalSwapFee: pool.totalSwapFee,
-        totalSwapVolume: pool.totalSwapVolume,
-      };
+    if (!isTimestampInSheet) {
+      const pools = await getAllPools(blockNumber, networkIndex);
 
-      return orderedPool;
-    });
+      const completePools = pools.map((pool, index) => {
+        const orderedPool = {
+          rank: (index + 1).toString(),
+          date: runDateUTC.format("MM/DD/YYYY"),
+          blockNumber: blockNumber,
+          timeStamp: timestamp.toString(),
+          address: pool.address,
+          poolType: pool.poolType,
+          name: pool.name,
+          swapFee: pool.swapFee,
+          swapsCount: pool.swapsCount,
+          symbol: pool.symbol,
+          totalLiquidity: pool.totalLiquidity,
+          totalShares: pool.totalShares,
+          totalSwapFee: pool.totalSwapFee,
+          totalSwapVolume: pool.totalSwapVolume,
+        };
 
-    const values = completePools.map((pool) => Object.values(pool));
+        return orderedPool;
+      });
 
-    await copyPasteNewRows(
-      appAuthorization,
-      SPREADSHEET_ID,
-      databaseSheetId,
-      pools.length,
-      lastRowIndex
-    );
+      const values = completePools.map((pool) => Object.values(pool));
 
-    const output = await appAuthorization.spreadsheets.values.update(
-      {
-        spreadsheetId: SPREADSHEET_ID,
-        range: SHEET_NAME + "!C" + (lastRowIndex + 1).toString(),
-        valueInputOption: "USER_ENTERED",
-        resource: { values },
-      },
-      (err) => {
-        if (err) return console.log("The API returned an error: " + err);
-      }
-    );
-  } else console.log("Pool Database already in spreadsheet for timestamp");
+      await copyPasteNewRows(
+        appAuthorization,
+        SPREADSHEET_ID,
+        databaseSheetId,
+        pools.length,
+        lastRowIndex
+      );
 
-  //lastRunTimestamp = timestamp;
-  // }
+      const output = await appAuthorization.spreadsheets.values.update(
+        {
+          spreadsheetId: SPREADSHEET_ID,
+          range: SHEET_NAME + "!C" + (lastRowIndex + 1).toString(),
+          valueInputOption: "USER_ENTERED",
+          resource: { values },
+        },
+        (err) => {
+          if (err) return console.log("The API returned an error: " + err);
+        }
+      );
+    } else console.log("Pool Database already in spreadsheet for timestamp");
+
+    lastRunTimestamp = timestamp;
+  }
   console.log("Pool Import Sucessful");
 }
