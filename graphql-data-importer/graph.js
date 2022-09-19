@@ -170,3 +170,35 @@ async function getBlockForTimestamp(timestamp, networkIndex) {
   }
   return data.blocks[0].number;
 }
+
+export async function getAllPoolsForCompetition(blockNumber, networkIndex) {
+  const getPoolsQuery = gql`
+    query getpools($blocknumber: Int!) {
+      pools(
+        first: 1000
+        orderDirection: desc
+        orderBy: holdersCount
+        block: { number: $blocknumber }
+      ) {
+        name
+        address
+        poolType
+        swapFee
+        swapsCount
+        symbol
+        totalLiquidity
+        totalShares
+        totalSwapFee
+        totalSwapVolume
+        holdersCount
+      }
+    }
+  `;
+
+  const client = new GraphQLClient(BEETHOVENX_ENDPOINT[networkIndex]);
+  const variables = { blocknumber: Number(blockNumber) };
+
+  const response = await client.request(getPoolsQuery, variables);
+
+  return response.pools;
+}
