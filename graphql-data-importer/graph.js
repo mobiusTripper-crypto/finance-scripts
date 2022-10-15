@@ -6,6 +6,11 @@ const BEETHOVENX_ENDPOINT = [
   "https://api.thegraph.com/subgraphs/name/beethovenxfi/beethovenx-optimism",
 ];
 
+const BEETHOVENX_BACKEND = [
+  "https://backend-v2.beets-ftm-node.com/",
+  "https://backend-optimism-v2-.beets-ftm-node.com/",
+];
+
 const MASTERCHEF_ENDPOINT = [
   "https://api.thegraph.com/subgraphs/name/beethovenxfi/masterchefv2",
   "https://api.thegraph.com/subgraphs/name/beethovenxfi/balancer-gauges-optimism",
@@ -34,34 +39,29 @@ export async function getBlockForDate(startDate, networkIndex) {
   return { blockNumber, timestamp, runDateUTC };
 }
 
-export async function getAllPools(blockNumber, networkIndex) {
+export async function getAllPools(networkIndex) {
   const getPoolsQuery = gql`
-    query getpools($blocknumber: Int!) {
-      pools(
-        first: 1000
-        orderDirection: desc
-        orderBy: totalLiquidity
-        block: { number: $blocknumber }
-        where: { totalLiquidity_gt: 4999 }
-      ) {
+    query poolGetPools() {
+      poolGetPools(orderBy: totalLiquidity, orderDirection: desc){
         name
         address
-        poolType
-        swapFee
-        swapsCount
+        type
         symbol
-        totalLiquidity
-        totalShares
-        totalSwapFee
-        totalSwapVolume
+        dynamicData{
+          swapFee
+          swapsCount
+          totalLiquidity
+          totalShares
+          lifetimeSwapFees
+          lifetimeVolume
+        }
       }
     }
   `;
 
   const client = new GraphQLClient(BEETHOVENX_ENDPOINT[networkIndex]);
-  const variables = { blocknumber: Number(blockNumber) };
 
-  const response = await client.request(getPoolsQuery, variables);
+  const response = await client.request(getPoolsQuery);
 
   return response.pools;
 }

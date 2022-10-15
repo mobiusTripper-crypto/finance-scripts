@@ -94,7 +94,7 @@ async function addPoolDatabaseRows(auth, sheetID, databaseName, networkIndex) {
     );
 
   if (!isTimestampInSheet) {
-    const pools = await getAllPools(blockNumber, networkIndex);
+    const pools = await getAllPools(networkIndex);
 
     const completePools = pools.map((pool, index) => {
       const orderedPool = {
@@ -103,21 +103,25 @@ async function addPoolDatabaseRows(auth, sheetID, databaseName, networkIndex) {
         blockNumber: blockNumber,
         timeStamp: timestamp.toString(),
         address: pool.address,
-        poolType: pool.poolType,
+        poolType: pool.type,
         name: pool.name,
-        swapFee: pool.swapFee,
-        swapsCount: pool.swapsCount,
+        swapFee: pool.dynamicData.swapFee,
+        swapsCount: pool.dynamicData.swapsCount,
         symbol: pool.symbol,
-        totalLiquidity: pool.totalLiquidity,
-        totalShares: pool.totalShares,
-        totalSwapFee: pool.totalSwapFee,
-        totalSwapVolume: pool.totalSwapVolume,
+        totalLiquidity: pool.dynamicData.totalLiquidity,
+        totalShares: pool.dynamicData.totalShares,
+        totalSwapFee: pool.dynamicData.lifetimeSwapFees,
+        totalSwapVolume: pool.dynamicData.lifetimeVolume,
       };
 
       return orderedPool;
     });
 
-    const values = completePools.map((pool) => Object.values(pool));
+    const poolsWithMinTVL = completePools.filter(
+      (pool) => pool.totalLiquidity >= 5000
+    );
+
+    const values = poolsWithMinTVL.map((pool) => Object.values(pool));
 
     await copyPasteNewRows(
       appAuthorization,
