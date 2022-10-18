@@ -34,10 +34,10 @@ async function addEmissionsDatabaseRows(auth) {
   const appAuthorization = google.sheets({ version: "v4", auth });
 
   /*  RUN FOR DATE ENTERED  */
-  //const startDate = new Date(2022, 8, 10);
-  // const endDate = moment.tz(new Date(2022, 7, 1), "GMT").startOf("day").unix();
+  // const startDate = new Date(2022, 9, 15);
+  // //  const endDate = moment.tz(new Date(2022, 7, 1), "GMT").startOf("day").unix();
   // let lastRunTimestamp = 0;
-  // while (lastRunTimestamp <= endDate) {
+  // //while (lastRunTimestamp <= endDate) {
 
   // const { blockNumber, timestamp, runDateUTC } = await getBlockForDate(
   //   startDate,

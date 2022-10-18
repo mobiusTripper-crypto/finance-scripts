@@ -98,9 +98,7 @@ export async function getTokenData(blockNumber, networkIndex) {
         name
         address
         decimals
-        latestPrice {
-          priceUSD
-        }
+        latestUSDPrice
       }
     }
   `;
